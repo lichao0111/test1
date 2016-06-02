@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use vars qw($PROGNAME);
+use lib "/usr/local/nagios/libexec";
+use utils qw (%ERRORS &print_revision &support);
+
+my ( $opt_c, $opt_w, $opt_h, $opt_V );
+
+Getopt::Long::Configure('bundling');
+GetOptions(
+    "V"          => \$opt_V,
+    "version"    => \$opt_V,
+    "h"          => \$opt_h,
+    "help"       => \$opt_h,
+    "w=i"        => \$opt_w,
+    "warning=i"  => \$opt_w,
+    "c=i"        => \$opt_c,
+    "critical=i" => \$opt_c,
+);
+
+$PROGNAME = "check_disk";
+
+sub print_usage () {
+    print "Usage:\n";
+    print "  $PROGNAME [-w <percent>] [-c <percent>]\n";
+    print "  $PROGNAME [-h | --help]\n";
+    print "  $PROGNAME [-V | --version]\n";
+}
+
+sub print_help () {
+    print_revision( $PROGNAME, '1.0' );
+    print "Copyright (c) 2011 Sharp Zeng\n\n";
+    print_usage();
+    print "\n";
+    print "  <percent>  percent must be range from 0 to 100\n";
+    print "\n";
+    support();
+}
+
+if ($opt_V) {
+    print_revision( $PROGNAME, '1.0' );
+    exit $ERRORS{'OK'};
+}
+
+if ($opt_h) {
+    print_help();
+    exit $ERRORS{'OK'};
+}
+
+$opt_c = 90 unless ($opt_c);
+$opt_w = 80 unless ($opt_w);
+
+unless ( open PIPE, "df -lh -P |" ) {
+    print "Failed to execute df";
+    exit $ERRORS{'CRITICAL'};
+}
+
+my @result_ok;
+my @result_ok_w;
+my @result_c;
+my $flag = 'OK';
+while (<PIPE>) {
+    my ( $filesystem, $size, $used, $avail, $used_percent, $mount_point )
+        = ( split '\s+', $_ );
+    next if ( $mount_point !~ /^\// );
+    next if ( $mount_point eq '/boot' || $mount_point eq '/dev/shm' );
+    $used_percent =~ s/%$//;
+
+        if ( $used_percent > $opt_c ) {
+			push @result_c, "$mount_point    ($used/$size)    $used_percent%";
+            $flag = 'CRITICAL';
+        }
+        elsif ( $used_percent > $opt_w && $flag ne 'CRITICAL') {
+			push @result_ok_w, "$mount_point    ($used/$size)    $used_percent%";
+            $flag = 'WARNING';
+        } else {
+			push @result_ok, "$mount_point    ($used/$size)    $used_percent%";
+		}
+}
+
+close PIPE;
+if ( $flag eq 'CRITICAL' ) {
+	print join( '<br/>', @result_c );
+}
+elsif ( $flag eq 'WARNING') {
+	print join( '<br/>', @result_ok_w );
+} else {
+	 print join( '<br/>', @result_ok );
+}
+exit $ERRORS{$flag};
