@@ -1,7 +1,7 @@
 #!/bin/bash
 #nagios agent install
-#Ê×ÏÈ½«nrpe-2.13.tar.gz ºÍnagios-plugins-1.4.13.tar.gz ÒÔ¼°¼à¿Ø½Å±¾check_disk_zzy·Ö·¢µ½Ã¿Ì¨·þÎñÆ÷/root Ä¿Â¼ÏÂ
-#ÔÙ½«´Ë½Å±¾·Ö·¢ÏÂÈ¥£¬Ö´ÐÐ,ÔÚ¼à¿Ø¶ËµÄ/usr/local/nagios/etc/objects/servers Ä¿Â¼ÏÂ£¬Ìí¼Ó¶ÔÓ¦µÄ±»¼à¿Ø¶ËµÄÅäÖÃÎÄ¼þ
+#é¦–å…ˆå°†nrpe-2.13.tar.gz å’Œnagios-plugins-1.4.13.tar.gz ä»¥åŠç›‘æŽ§è„šæœ¬check_disk_zzyåˆ†å‘åˆ°æ¯å°æœåŠ¡å™¨/root ç›®å½•ä¸‹
+#å†å°†æ­¤è„šæœ¬åˆ†å‘ä¸‹åŽ»ï¼Œæ‰§è¡Œ,åœ¨ç›‘æŽ§ç«¯çš„/usr/local/nagios/etc/objects/servers ç›®å½•ä¸‹ï¼Œæ·»åŠ å¯¹åº”çš„è¢«ç›‘æŽ§ç«¯çš„é…ç½®æ–‡ä»¶
 
 yum install -y gcc glibc glibc-common gd gd-devel xinetd openssl-devel
 useradd nagios &>/dev/null 
@@ -19,8 +19,8 @@ make install-plugin
 make install-daemon
 make install-daemon-config
 
-#ÐÞ¸Ä±»¼à¿Ø¶ËµÄÅäÖÃÎÄ¼þ£¬Ìí¼Ó±»¼à¿Ø¶ËIPºÍ¼à¿ØµÄÏîÄ¿
-sed -i 's@allowed_hosts=127.0.0.1@allowed_hosts=127.0.0.1,117.28.243.18,117.28.242.133@' /usr/local/nagios/etc/nrpe.cfg
+#ä¿®æ”¹è¢«ç›‘æŽ§ç«¯çš„é…ç½®æ–‡ä»¶ï¼Œæ·»åŠ è¢«ç›‘æŽ§ç«¯IPå’Œç›‘æŽ§çš„é¡¹ç›®
+sed -i 's@allowed_hosts=127.0.0.1@allowed_hosts=127.0.0.1@' /usr/local/nagios/etc/nrpe.cfg
 echo -e 'command[check_disk_zzy]=/usr/local/nagios/libexec/check_disk_zzy -w 70 -c 80' >> /usr/local/nagios/etc/nrpe.cfg
 echo -e 'command[check_salt]=/usr/local/nagios/libexec/check_procs -w 1:1 -C salt-minion' >> /usr/local/nagios/etc/nrpe.cfg
 
@@ -30,7 +30,7 @@ chmod 755 /usr/local/nagios/libexec/*
 /usr/local/nagios/bin/nrpe -c /usr/local/nagios/etc/nrpe.cfg -d
 echo '/usr/local/nagios/bin/nrpe -c /usr/local/nagios/etc/nrpe.cfg -d' >> /etc/rc.local
 
-#Ìí¼Ó·À»ðÇ½
+#æ·»åŠ é˜²ç«å¢™
 iptables -I INPUT -p tcp -m multiport --dports 5666 -j ACCEPT
 service iptables save &>/dev/null
 
